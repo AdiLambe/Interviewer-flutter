@@ -27,13 +27,15 @@ Color scoreColor(num s) => s >= 7 ? good : (s >= 4 ? warn : bad);
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   ErrorWidget.builder = (d) => Material(
-        color: bg,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Text('App mein error aaya - screenshot bhejo\n\n${d.exception}\n${d.stack}',
-              style: const TextStyle(color: Colors.white, fontSize: 12)),
-        ),
-      );
+    color: bg,
+    child: SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Text(
+        'App mein error aaya - screenshot bhejo\n\n${d.exception}\n${d.stack}',
+        style: const TextStyle(color: Colors.white, fontSize: 12),
+      ),
+    ),
+  );
   final bank = BankData.parse(await rootBundle.loadString('assets/bank.json'));
   final prefs = await SharedPreferences.getInstance();
   final voice = Voice();
@@ -53,11 +55,28 @@ class AppCtx {
   bool get autoListen => prefs.getBool('auto_listen') ?? false;
   set autoListen(bool v) => prefs.setBool('auto_listen', v);
 
+  /// Mic kitni der tak chalu rahe (seconds). Default 1.5 min.
+  int get micSeconds => prefs.getInt('mic_seconds') ?? 90;
+  set micSeconds(int v) => prefs.setInt('mic_seconds', v);
+
+  /// Sunne ki bhasha (Indian English default)
+  String get sttLocale => prefs.getString('stt_locale') ?? 'en_IN';
+  set sttLocale(String v) => prefs.setString('stt_locale', v);
+
+  /// Last chuna hua level (-1 = Auto) aur sawaalon ki ginti (0 = unlimited)
+  int get lastLevel => prefs.getInt('last_level') ?? 0;
+  set lastLevel(int v) => prefs.setInt('last_level', v);
+  int get lastCount => prefs.getInt('last_count') ?? 20;
+  set lastCount(int v) => prefs.setInt('last_count', v);
+
   List<String> history(String key) => prefs.getStringList('hist_$key') ?? [];
-  void saveHistory(String key, List<String> h) => prefs.setStringList('hist_$key', h);
+  void saveHistory(String key, List<String> h) =>
+      prefs.setStringList('hist_$key', h);
 
   List<Map<String, dynamic>> pastReports() =>
-      (prefs.getStringList('reports') ?? []).map((e) => Map<String, dynamic>.from(jsonDecode(e))).toList();
+      (prefs.getStringList('reports') ?? [])
+          .map((e) => Map<String, dynamic>.from(jsonDecode(e)))
+          .toList();
   Future<void> addReport(Map<String, dynamic> r) async {
     final all = prefs.getStringList('reports') ?? [];
     all.insert(0, jsonEncode(r));
@@ -75,65 +94,91 @@ class MockInterviewApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-        title: 'Mock Interview',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          brightness: Brightness.dark,
-          scaffoldBackgroundColor: bg,
-          colorScheme: const ColorScheme.dark(primary: accent, surface: card),
-        ),
-        home: HomePage(app: app),
-      );
+    title: 'Mock Interview',
+    debugShowCheckedModeBanner: false,
+    theme: ThemeData(
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: bg,
+      colorScheme: const ColorScheme.dark(primary: accent, surface: card),
+    ),
+    home: HomePage(app: app),
+  );
 }
 
 // =====================================================================
 //  Small UI helpers
 // =====================================================================
 Widget pill(String t, {Color color = accent, bool filled = false}) => Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: filled ? color : color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.5)),
-      ),
-      child: Text(t, style: TextStyle(color: filled ? bg : color, fontSize: 12, fontWeight: FontWeight.w700)),
-    );
+  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+  decoration: BoxDecoration(
+    color: filled ? color : color.withValues(alpha: 0.12),
+    borderRadius: BorderRadius.circular(20),
+    border: Border.all(color: color.withValues(alpha: 0.5)),
+  ),
+  child: Text(
+    t,
+    style: TextStyle(
+      color: filled ? bg : color,
+      fontSize: 12,
+      fontWeight: FontWeight.w700,
+    ),
+  ),
+);
 
-Widget panel({required Widget child, EdgeInsets? padding, Color color = card}) => Container(
-      width: double.infinity,
-      padding: padding ?? const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(18)),
-      child: child,
-    );
+Widget panel({
+  required Widget child,
+  EdgeInsets? padding,
+  Color color = card,
+}) => Container(
+  width: double.infinity,
+  padding: padding ?? const EdgeInsets.all(16),
+  decoration: BoxDecoration(
+    color: color,
+    borderRadius: BorderRadius.circular(18),
+  ),
+  child: child,
+);
 
-Widget primaryBtn(String text, VoidCallback? onTap, {IconData? icon, Color color = accentDark}) => SizedBox(
-      height: 54,
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: card2,
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        ),
-        onPressed: onTap,
-        icon: Icon(icon ?? Icons.play_arrow_rounded),
-        label: Text(text, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, letterSpacing: 0.5)),
+Widget primaryBtn(
+  String text,
+  VoidCallback? onTap, {
+  IconData? icon,
+  Color color = accentDark,
+}) => SizedBox(
+  height: 54,
+  width: double.infinity,
+  child: ElevatedButton.icon(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: color,
+      foregroundColor: Colors.white,
+      disabledBackgroundColor: card2,
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+    ),
+    onPressed: onTap,
+    icon: Icon(icon ?? Icons.play_arrow_rounded),
+    label: Text(
+      text,
+      style: const TextStyle(
+        fontWeight: FontWeight.w800,
+        fontSize: 16,
+        letterSpacing: 0.5,
       ),
-    );
+    ),
+  ),
+);
 
 IconData catIcon(String c) => switch (c) {
-      'Testing and QA' => Icons.bug_report_outlined,
-      'DevOps and Cloud' => Icons.cloud_outlined,
-      'Backend' => Icons.dns_outlined,
-      'Frontend' => Icons.web_outlined,
-      'Databases and Data' => Icons.storage_outlined,
-      'Middleware and Integration' => Icons.hub_outlined,
-      'Product and Business' => Icons.trending_up,
-      'SAP' => Icons.business_center_outlined,
-      _ => Icons.work_outline,
-    };
+  'Testing and QA' => Icons.bug_report_outlined,
+  'DevOps and Cloud' => Icons.cloud_outlined,
+  'Backend' => Icons.dns_outlined,
+  'Frontend' => Icons.web_outlined,
+  'Databases and Data' => Icons.storage_outlined,
+  'Middleware and Integration' => Icons.hub_outlined,
+  'Product and Business' => Icons.trending_up,
+  'SAP' => Icons.business_center_outlined,
+  _ => Icons.work_outline,
+};
 
 // =====================================================================
 //  Home: role + duration
@@ -150,185 +195,333 @@ class _HomePageState extends State<HomePage> {
   String query = '';
   String cat = 'All';
   Role? role;
-  int minutes = 18;
+  late int level = widget.app.lastLevel; // -1 = Auto
+  late int count = widget.app.lastCount; // 0 = unlimited
+
+  Widget _choice(String label, bool on, VoidCallback tap) => Expanded(
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: tap,
+        child: Container(
+          height: 36,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: on ? accentDark : card,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: on ? Colors.white : muted,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
     final bank = widget.app.bank;
-    final cats = ['All', ...bank.catOrder.where((c) => bank.modules.values.any((r) => r.cat == c))];
+    final cats = [
+      'All',
+      ...bank.catOrder.where((c) => bank.modules.values.any((r) => r.cat == c)),
+    ];
     final q = norm(query);
     final roles = bank.rolesInOrder().where((r) {
       if (cat != 'All' && r.cat != cat) return false;
       if (q.isEmpty) return true;
-      return norm(r.name).contains(q) || r.aliases.any((a) => norm(a).contains(q));
+      return norm(r.name).contains(q) ||
+          r.aliases.any((a) => norm(a).contains(q));
     }).toList();
 
     return Scaffold(
       body: SafeArea(
-        child: CustomScrollView(slivers: [
-          SliverToBoxAdapter(
-            child: Container(
-              margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(22),
-                gradient: const LinearGradient(colors: [Color(0xFF1F4FA8), Color(0xFF0F7FB8)]),
-              ),
-              child: Row(children: [
-                Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    const Text('MOCK INTERVIEW',
-                        style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w800, letterSpacing: 2, fontSize: 12)),
-                    const SizedBox(height: 6),
-                    const Text('Practice like the real thing',
-                        style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800)),
-                    const SizedBox(height: 6),
-                    Text('${bank.modules.length} roles • offline • voice + score',
-                        style: const TextStyle(color: Colors.white70, fontSize: 13)),
-                  ]),
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Container(
+                margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(22),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1F4FA8), Color(0xFF0F7FB8)],
+                  ),
                 ),
-                IconButton(
-                  tooltip: 'History',
-                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => HistoryPage(app: widget.app))),
-                  icon: const Icon(Icons.history, color: Colors.white, size: 28),
-                ),
-                IconButton(
-                  tooltip: 'Settings',
-                  onPressed: () => showModalBottomSheet(context: context, builder: (_) => SettingsSheet(app: widget.app)),
-                  icon: const Icon(Icons.tune, color: Colors.white, size: 26),
-                ),
-              ]),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: TextField(
-                onChanged: (v) => setState(() => query = v),
-                style: const TextStyle(color: textMain),
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.search, color: muted),
-                  hintText: 'Search role (Java, Playwright, SAP FICO...)',
-                  hintStyle: const TextStyle(color: muted),
-                  filled: true,
-                  fillColor: card,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-                ),
-              ),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: SizedBox(
-              height: 52,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                children: [
-                  for (final c in cats)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: ChoiceChip(
-                        label: Text(c),
-                        selected: cat == c,
-                        onSelected: (_) => setState(() => cat = c),
-                        selectedColor: accentDark,
-                        backgroundColor: card,
-                        labelStyle: TextStyle(color: cat == c ? Colors.white : muted, fontWeight: FontWeight.w600),
-                        side: BorderSide.none,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'MOCK INTERVIEW',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 2,
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            'Practice like the real thing',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            '${bank.modules.length} roles • ${bank.modules.values.fold<int>(0, (a, r) => a + r.questions.length)}+ questions • unlimited practice',
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                ],
-              ),
-            ),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-            sliver: SliverGrid.builder(
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 220, mainAxisExtent: 96, crossAxisSpacing: 10, mainAxisSpacing: 10),
-              itemCount: roles.length,
-              itemBuilder: (_, i) {
-                final r = roles[i];
-                final on = role?.key == r.key;
-                return InkWell(
-                  borderRadius: BorderRadius.circular(16),
-                  onTap: () => setState(() => role = r),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: on ? accentDark.withValues(alpha: 0.25) : card,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: on ? accent : Colors.transparent, width: 2),
+                    IconButton(
+                      tooltip: 'History',
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => HistoryPage(app: widget.app),
+                        ),
+                      ),
+                      icon: const Icon(
+                        Icons.history,
+                        color: Colors.white,
+                        size: 28,
+                      ),
                     ),
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Icon(catIcon(r.cat), color: on ? accent : muted, size: 22),
-                      const Spacer(),
-                      Text(r.name,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: on ? Colors.white : textMain, fontWeight: FontWeight.w700)),
-                      Text('${r.questions.length} questions', style: const TextStyle(color: muted, fontSize: 11)),
-                    ]),
-                  ),
-                );
-              },
-            ),
-          ),
-          if (roles.isEmpty)
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Center(child: Text('Koi role nahi mila', style: TextStyle(color: muted))),
+                    IconButton(
+                      tooltip: 'Settings',
+                      onPressed: () => showModalBottomSheet(
+                        context: context,
+                        builder: (_) => SettingsSheet(app: widget.app),
+                      ),
+                      icon: const Icon(
+                        Icons.tune,
+                        color: Colors.white,
+                        size: 26,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          const SliverToBoxAdapter(child: SizedBox(height: 170)),
-        ]),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: TextField(
+                  onChanged: (v) => setState(() => query = v),
+                  style: const TextStyle(color: textMain),
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.search, color: muted),
+                    hintText: 'Search role (Java, Playwright, SAP FICO...)',
+                    hintStyle: const TextStyle(color: muted),
+                    filled: true,
+                    fillColor: card,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 52,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  children: [
+                    for (final c in cats)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: ChoiceChip(
+                          label: Text(c),
+                          selected: cat == c,
+                          onSelected: (_) => setState(() => cat = c),
+                          selectedColor: accentDark,
+                          backgroundColor: card,
+                          labelStyle: TextStyle(
+                            color: cat == c ? Colors.white : muted,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          side: BorderSide.none,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+              sliver: SliverGrid.builder(
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 220,
+                  mainAxisExtent: 96,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                ),
+                itemCount: roles.length,
+                itemBuilder: (_, i) {
+                  final r = roles[i];
+                  final on = role?.key == r.key;
+                  return InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: () => setState(() => role = r),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: on ? accentDark.withValues(alpha: 0.25) : card,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: on ? accent : Colors.transparent,
+                          width: 2,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            catIcon(r.cat),
+                            color: on ? accent : muted,
+                            size: 22,
+                          ),
+                          const Spacer(),
+                          Text(
+                            r.name,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: on ? Colors.white : textMain,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          Text(
+                            '${r.questions.length} questions + unlimited drills',
+                            style: const TextStyle(color: muted, fontSize: 11),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            if (roles.isEmpty)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Center(
+                    child: Text(
+                      'Koi role nahi mila',
+                      style: TextStyle(color: muted),
+                    ),
+                  ),
+                ),
+              ),
+            const SliverToBoxAdapter(child: SizedBox(height: 200)),
+          ],
+        ),
       ),
       bottomSheet: Container(
         color: bg,
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
         child: SafeArea(
           top: false,
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Row(children: [
-              const Padding(
-                padding: EdgeInsets.only(right: 8),
-                child: Icon(Icons.timer_outlined, color: muted, size: 20),
-              ),
-              for (final m in const [10, 18, 25, 35])
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 3),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () => setState(() => minutes = m),
-                      child: Container(
-                        height: 38,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: minutes == m ? accentDark : card,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text('$m min',
-                            style: TextStyle(
-                                color: minutes == m ? Colors.white : muted, fontWeight: FontWeight.w700)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  const SizedBox(
+                    width: 74,
+                    child: Text(
+                      'Level',
+                      style: TextStyle(
+                        color: muted,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
-                ),
-            ]),
-            const SizedBox(height: 10),
-            primaryBtn(
-              role == null ? 'Choose a role' : 'Start ${role!.name}',
-              role == null
-                  ? null
-                  : () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => InterviewPage(app: widget.app, role: role!, minutes: minutes)),
+                  for (final (v, l) in const [
+                    (0, 'Beginner'),
+                    (1, 'Intermed.'),
+                    (2, 'Advanced'),
+                    (3, 'Expert'),
+                    (-1, 'Auto'),
+                  ])
+                    _choice(l, level == v, () => setState(() => level = v)),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const SizedBox(
+                    width: 74,
+                    child: Text(
+                      'Questions',
+                      style: TextStyle(
+                        color: muted,
+                        fontWeight: FontWeight.w600,
                       ),
-            ),
-          ]),
+                    ),
+                  ),
+                  for (final n in const [10, 20, 30, 50, 0])
+                    _choice(
+                      n == 0 ? '\u221e' : '$n',
+                      count == n,
+                      () => setState(() => count = n),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              primaryBtn(
+                role == null
+                    ? 'Choose a role'
+                    : 'Start \u2022 ${count == 0 ? 'unlimited, no timer' : '$count Qs \u2022 ${count * 3 ~/ 2} min'}',
+                role == null
+                    ? null
+                    : () {
+                        widget.app.lastLevel = level;
+                        widget.app.lastCount = count;
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => InterviewPage(
+                              app: widget.app,
+                              role: role!,
+                              level: level < 0 ? null : level,
+                              count: count,
+                            ),
+                          ),
+                        );
+                      },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -346,10 +539,21 @@ class Msg {
 }
 
 class InterviewPage extends StatefulWidget {
-  const InterviewPage({super.key, required this.app, required this.role, required this.minutes});
+  const InterviewPage({
+    super.key,
+    required this.app,
+    required this.role,
+    required this.level,
+    required this.count,
+  });
   final AppCtx app;
   final Role role;
-  final int minutes;
+
+  /// null = Auto level
+  final int? level;
+
+  /// 0 = unlimited sawaal
+  final int count;
 
   @override
   State<InterviewPage> createState() => _InterviewPageState();
@@ -362,6 +566,17 @@ class _InterviewPageState extends State<InterviewPage> {
   final scroll = ScrollController();
   Timer? tick;
   bool listening = false;
+  DateTime? listenStart;
+  String _baseText = ''; // mic shuru hone se pehle jo type kiya tha
+
+  /// Mic band hone mein kitne second baaki
+  int get micLeft => listenStart == null
+      ? 0
+      : math.max(
+          0,
+          widget.app.micSeconds -
+              DateTime.now().difference(listenStart!).inSeconds,
+        );
   bool speaking = false;
   bool finished = false;
   String hintText = '';
@@ -370,9 +585,22 @@ class _InterviewPageState extends State<InterviewPage> {
   void initState() {
     super.initState();
     final a = widget.app;
-    iv = Interview(a.bank, widget.role.key, widget.minutes,
-        history: a.history(widget.role.key), saveHist: (h) => a.saveHistory(widget.role.key, h));
-    tick = Timer.periodic(const Duration(seconds: 1), (_) => setState(() {}));
+    iv = Interview(
+      a.bank,
+      widget.role.key,
+      limitMinutes, // har sawaal ke liye 1.5 min (0 = unlimited, koi timer nahi)
+      history: a.history(widget.role.key),
+      saveHist: (h) => a.saveHistory(widget.role.key, h),
+      fixedLevel: widget.level,
+      maxQuestions: widget.count,
+    );
+    tick = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() {});
+      if (!finished && limitMinutes > 0 && iv.elapsed >= limitMinutes) {
+        _timeUp();
+      }
+    });
     _bot(iv.start());
   }
 
@@ -384,11 +612,14 @@ class _InterviewPageState extends State<InterviewPage> {
   }
 
   void _scrollDown() => WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (scroll.hasClients) {
-          scroll.animateTo(scroll.position.maxScrollExtent,
-              duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
-        }
-      });
+    if (scroll.hasClients) {
+      scroll.animateTo(
+        scroll.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    }
+  });
 
   Future<void> _bot(String text) async {
     setState(() {
@@ -402,24 +633,46 @@ class _InterviewPageState extends State<InterviewPage> {
     if (widget.app.autoListen && !finished) _listen();
   }
 
+  /// Mic button: dabao = shuru, dobara dabao = band. 1.5 min tak chalta hai.
   Future<void> _listen() async {
-    if (listening) return;
-    await widget.app.voice.stop();
-    setState(() => listening = true);
-    final heard = await widget.app.voice.listen(localeId: 'en_IN');
+    final v = widget.app.voice;
+    if (listening) {
+      await v.stopDictation();
+      return;
+    }
+    if (!v.canListen) {
+      _snack('Mic nahi mila - jawab type karo (ya keyboard ka mic use karo)');
+      return;
+    }
+    _baseText = answer.text.trim();
+    setState(() {
+      listening = true;
+      listenStart = DateTime.now();
+    });
+    final text = await v.dictate(
+      maxDuration: Duration(seconds: widget.app.micSeconds),
+      localeId: widget.app.sttLocale,
+      onText: (t) {
+        if (!mounted) return;
+        answer.text = joinText(_baseText, t);
+        answer.selection = TextSelection.collapsed(offset: answer.text.length);
+      },
+    );
     if (!mounted) return;
     setState(() {
       listening = false;
-      if (heard != null && heard.trim().isNotEmpty) {
-        answer.text = answer.text.trim().isEmpty ? heard : '${answer.text.trim()} $heard';
-      }
+      listenStart = null;
+      answer.text = joinText(_baseText, text);
     });
-    if (heard == null && !widget.app.voice.canListen) {
-      _snack('Mic nahi mila - jawab type karo (ya keyboard ka mic use karo)');
+    if (v.lastFatalError != null) {
+      _snack(
+        'Mic error: ${v.lastFatalError}. Phone settings mein app ko Microphone permission do.',
+      );
     }
   }
 
-  void _snack(String t) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t)));
+  void _snack(String t) =>
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t)));
 
   int? _lastScore() {
     for (final x in iv.log.reversed) {
@@ -430,6 +683,10 @@ class _InterviewPageState extends State<InterviewPage> {
 
   Future<void> _submit({bool skipped = false}) async {
     if (finished) return;
+    if (listening) {
+      await widget.app.voice.stopDictation();
+      await Future.delayed(const Duration(milliseconds: 400));
+    }
     final a = answer.text.trim();
     if (!skipped && a.isEmpty) {
       _snack('Jawab bolo/type karo, ya SKIP dabao');
@@ -451,6 +708,30 @@ class _InterviewPageState extends State<InterviewPage> {
     }
   }
 
+  /// Har sawaal ke liye 1.5 minute: 10 sawaal = 15 min. 0 = unlimited.
+  int get limitMinutes => widget.count <= 0 ? 0 : widget.count * 3 ~/ 2;
+
+  /// Time khatam: jo jawab bol/likh rahe the woh bhi gino, phir result.
+  Future<void> _timeUp() async {
+    if (finished) return;
+    finished = true;
+    if (listening) {
+      await widget.app.voice.stopDictation();
+      await Future.delayed(const Duration(milliseconds: 400));
+    }
+    final a = answer.text.trim();
+    if (a.isNotEmpty && iv.cur['intro'] != true) {
+      iv.turn(a);
+      if (mounted) setState(() => msgs.add(Msg(true, a, _lastScore())));
+    }
+    if (!mounted) return;
+    setState(
+      () => msgs.add(Msg(false, 'Time is up. That is all the time we have.')),
+    );
+    await widget.app.say('Time is up. That is all the time we have.');
+    if (mounted) _finish();
+  }
+
   Future<void> _finish() async {
     finished = true;
     await widget.app.voice.stop();
@@ -464,10 +745,18 @@ class _InterviewPageState extends State<InterviewPage> {
       'text': text,
     });
     if (!mounted) return;
-    unawaited(widget.app.say(
-        'Interview complete. Your score is ${rep.overall} out of 10. ${rep.verdict}'));
+    unawaited(
+      widget.app.say(
+        'Interview complete. Your score is ${rep.overall} out of 10. ${rep.verdict}',
+      ),
+    );
     Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (_) => ResultPage(app: widget.app, iv: iv, rep: rep, text: text)));
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            ResultPage(app: widget.app, iv: iv, rep: rep, text: text),
+      ),
+    );
   }
 
   Future<void> _end() async {
@@ -481,8 +770,14 @@ class _InterviewPageState extends State<InterviewPage> {
         title: const Text('End interview?'),
         content: const Text('Abhi tak ke jawab se result banega.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Continue')),
-          TextButton(onPressed: () => Navigator.pop(c, true), child: const Text('End & see result')),
+          TextButton(
+            onPressed: () => Navigator.pop(c, false),
+            child: const Text('Continue'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(c, true),
+            child: const Text('End & see result'),
+          ),
         ],
       ),
     );
@@ -492,9 +787,14 @@ class _InterviewPageState extends State<InterviewPage> {
   @override
   Widget build(BuildContext context) {
     final secs = (iv.elapsed * 60).floor();
-    final left = math.max(0, widget.minutes * 60 - secs);
+    final unlimited = widget.count <= 0;
+    // countdown: kitna time baaki (unlimited mein bas kitna hua)
+    final shown = unlimited ? secs : math.max(0, limitMinutes * 60 - secs);
+    final lowTime = !unlimited && shown <= 120;
     final level = (iv.cur['level'] ?? 'beginner').toString();
-    final progress = (secs / (widget.minutes * 60)).clamp(0.0, 1.0);
+    final progress = unlimited
+        ? null
+        : (iv.asked / widget.count).clamp(0.0, 1.0);
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -503,39 +803,76 @@ class _InterviewPageState extends State<InterviewPage> {
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: bg,
-          title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(widget.role.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
-            Text('${(left ~/ 60).toString().padLeft(2, '0')}:${(left % 60).toString().padLeft(2, '0')} left  •  ${iv.log.length} answered',
-                style: const TextStyle(color: muted, fontSize: 12)),
-          ]),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.role.name,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 17,
+                ),
+              ),
+              Text(
+                'Q ${iv.asked}${unlimited ? '' : ' / ${widget.count}'}  \u2022  \u23f1 ${(shown ~/ 60).toString().padLeft(2, '0')}:${(shown % 60).toString().padLeft(2, '0')}${unlimited ? '' : ' left'}  \u2022  ${widget.level == null ? 'auto' : 'fixed'}',
+                style: TextStyle(
+                  color: lowTime ? bad : muted,
+                  fontSize: 12,
+                  fontWeight: lowTime ? FontWeight.w800 : FontWeight.normal,
+                ),
+              ),
+            ],
+          ),
           actions: [
-            Padding(padding: const EdgeInsets.only(right: 6), child: Center(child: pill(level))),
-            TextButton(onPressed: _end, child: const Text('END', style: TextStyle(color: bad, fontWeight: FontWeight.w800))),
+            Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: Center(child: pill(level)),
+            ),
+            TextButton(
+              onPressed: _end,
+              child: const Text(
+                'END',
+                style: TextStyle(color: bad, fontWeight: FontWeight.w800),
+              ),
+            ),
           ],
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(3),
-            child: LinearProgressIndicator(value: progress, minHeight: 3, backgroundColor: card, color: accent),
+            child: LinearProgressIndicator(
+              value: progress ?? 0,
+              minHeight: 3,
+              backgroundColor: card,
+              color: accent,
+            ),
           ),
         ),
-        body: Column(children: [
-          Expanded(
-            child: ListView.builder(
-              controller: scroll,
-              padding: const EdgeInsets.all(14),
-              itemCount: msgs.length,
-              itemBuilder: (_, i) => _bubble(msgs[i], i == msgs.length - 1),
+        body: Column(
+          children: [
+            Expanded(
+              child: ListView.builder(
+                controller: scroll,
+                padding: const EdgeInsets.all(14),
+                itemCount: msgs.length,
+                itemBuilder: (_, i) => _bubble(msgs[i], i == msgs.length - 1),
+              ),
             ),
-          ),
-          if (hintText.isNotEmpty)
-            Container(
-              width: double.infinity,
-              margin: const EdgeInsets.symmetric(horizontal: 14),
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: warn.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
-              child: Text('Hint: $hintText', style: const TextStyle(color: warn)),
-            ),
-          _composer(),
-        ]),
+            if (hintText.isNotEmpty)
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.symmetric(horizontal: 14),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: warn.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'Hint: $hintText',
+                  style: const TextStyle(color: warn),
+                ),
+              ),
+            _composer(),
+          ],
+        ),
       ),
     );
   }
@@ -557,90 +894,162 @@ class _InterviewPageState extends State<InterviewPage> {
             bottomRight: Radius.circular(m.me ? 4 : 16),
           ),
         ),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          if (!m.me)
-            Row(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.record_voice_over, size: 14, color: accent),
-              const SizedBox(width: 6),
-              Text(speaking && last ? 'Interviewer is speaking...' : 'Interviewer',
-                  style: const TextStyle(color: accent, fontSize: 11, fontWeight: FontWeight.w700)),
-            ]),
-          if (!m.me) const SizedBox(height: 4),
-          Text(m.text, style: const TextStyle(color: textMain, fontSize: 15, height: 1.35)),
-          if (m.me && m.score != null) ...[
-            const SizedBox(height: 6),
-            pill('Score ${m.score}/10', color: scoreColor(m.score!), filled: true),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (!m.me)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.record_voice_over, size: 14, color: accent),
+                  const SizedBox(width: 6),
+                  Text(
+                    speaking && last
+                        ? 'Interviewer is speaking...'
+                        : 'Interviewer',
+                    style: const TextStyle(
+                      color: accent,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            if (!m.me) const SizedBox(height: 4),
+            Text(
+              m.text,
+              style: const TextStyle(
+                color: textMain,
+                fontSize: 15,
+                height: 1.35,
+              ),
+            ),
+            if (m.me && m.score != null) ...[
+              const SizedBox(height: 6),
+              pill(
+                'Score ${m.score}/10',
+                color: scoreColor(m.score!),
+                filled: true,
+              ),
+            ],
           ],
-        ]),
+        ),
       ),
     );
   }
 
   Widget _composer() => Container(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-        decoration: const BoxDecoration(color: bg, border: Border(top: BorderSide(color: card2))),
-        child: SafeArea(
-          top: false,
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Row(children: [
+    padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+    decoration: const BoxDecoration(
+      color: bg,
+      border: Border(top: BorderSide(color: card2)),
+    ),
+    child: SafeArea(
+      top: false,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
               _small(Icons.lightbulb_outline, 'Hint', () {
                 final h = iv.hint();
                 setState(() => hintText = h);
               }),
-              _small(Icons.replay, 'Repeat', () => widget.app.say(msgs.lastWhere((m) => !m.me).text)),
+              _small(
+                Icons.replay,
+                'Repeat',
+                () => widget.app.say(msgs.lastWhere((m) => !m.me).text),
+              ),
               _small(Icons.skip_next, 'Skip', () => _submit(skipped: true)),
-            ]),
-            const SizedBox(height: 8),
-            Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
               Expanded(
                 child: TextField(
                   controller: answer,
                   minLines: 1,
-                  maxLines: 5,
+                  maxLines: 7,
                   style: const TextStyle(color: textMain),
                   decoration: InputDecoration(
-                    hintText: listening ? 'Listening... bolo' : 'Apna jawab bolo ya type karo',
+                    hintText: listening
+                        ? 'Bolo... (${micLeft ~/ 60}:${(micLeft % 60).toString().padLeft(2, '0')} baaki)'
+                        : 'Mic dabao aur bolo, ya type karo',
                     hintStyle: TextStyle(color: listening ? good : muted),
                     filled: true,
                     fillColor: card,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
-              _round(listening ? Icons.graphic_eq : Icons.mic, listening ? good : card2, _listen),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (listening)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        '${micLeft ~/ 60}:${(micLeft % 60).toString().padLeft(2, '0')}',
+                        style: const TextStyle(
+                          color: good,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  _round(
+                    listening ? Icons.stop_rounded : Icons.mic,
+                    listening ? bad : card2,
+                    _listen,
+                  ),
+                ],
+              ),
               const SizedBox(width: 8),
               _round(Icons.send_rounded, accentDark, () => _submit()),
-            ]),
-          ]),
-        ),
-      );
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
 
   Widget _small(IconData i, String t, VoidCallback onTap) => Expanded(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 3),
-          child: OutlinedButton.icon(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: textMain,
-              side: const BorderSide(color: card2),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: finished ? null : onTap,
-            icon: Icon(i, size: 18),
-            label: Text(t),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 3),
+      child: OutlinedButton.icon(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: textMain,
+          side: const BorderSide(color: card2),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
-      );
+        onPressed: finished ? null : onTap,
+        icon: Icon(i, size: 18),
+        label: Text(t),
+      ),
+    ),
+  );
 
   Widget _round(IconData i, Color c, VoidCallback onTap) => Material(
-        color: c,
-        shape: const CircleBorder(),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: finished ? null : onTap,
-          child: SizedBox(width: 52, height: 52, child: Icon(i, color: Colors.white)),
-        ),
-      );
+    color: c,
+    shape: const CircleBorder(),
+    child: InkWell(
+      customBorder: const CircleBorder(),
+      onTap: finished ? null : onTap,
+      child: SizedBox(
+        width: 52,
+        height: 52,
+        child: Icon(i, color: Colors.white),
+      ),
+    ),
+  );
 }
 
 // =====================================================================
@@ -652,18 +1061,31 @@ class ScoreRing extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SizedBox(
-        width: 150,
-        height: 150,
-        child: CustomPaint(
-          painter: _RingPainter(score / 10, scoreColor(score)),
-          child: Center(
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Text('$score', style: TextStyle(color: scoreColor(score), fontSize: 40, fontWeight: FontWeight.w900)),
-              const Text('out of 10', style: TextStyle(color: muted, fontSize: 12)),
-            ]),
-          ),
+    width: 150,
+    height: 150,
+    child: CustomPaint(
+      painter: _RingPainter(score / 10, scoreColor(score)),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '$score',
+              style: TextStyle(
+                color: scoreColor(score),
+                fontSize: 40,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const Text(
+              'out of 10',
+              style: TextStyle(color: muted, fontSize: 12),
+            ),
+          ],
         ),
-      );
+      ),
+    ),
+  );
 }
 
 class _RingPainter extends CustomPainter {
@@ -692,94 +1114,192 @@ class _RingPainter extends CustomPainter {
 }
 
 class ResultPage extends StatelessWidget {
-  const ResultPage({super.key, required this.app, required this.iv, required this.rep, required this.text});
+  const ResultPage({
+    super.key,
+    required this.app,
+    required this.iv,
+    required this.rep,
+    required this.text,
+  });
   final AppCtx app;
   final Interview iv;
   final Report rep;
   final String text;
 
-  Widget _section(String title, IconData icon, Color color, List<String> items, String empty) => Padding(
-        padding: const EdgeInsets.only(top: 12),
-        child: panel(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
+  Widget _section(
+    String title,
+    IconData icon,
+    Color color,
+    List<String> items,
+    String empty,
+  ) => Padding(
+    padding: const EdgeInsets.only(top: 12),
+    child: panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
               Icon(icon, color: color, size: 20),
               const SizedBox(width: 8),
-              Text(title, style: TextStyle(color: color, fontWeight: FontWeight.w800, letterSpacing: 1)),
-            ]),
-            const SizedBox(height: 8),
-            if (items.isEmpty) Text(empty, style: const TextStyle(color: muted)),
-            for (final s in items)
-              Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('•  ', style: TextStyle(color: color)),
-                  Expanded(child: Text(s, style: const TextStyle(color: textMain, height: 1.35))),
-                ]),
+              Text(
+                title,
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1,
+                ),
               ),
-          ]),
-        ),
-      );
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (items.isEmpty) Text(empty, style: const TextStyle(color: muted)),
+          for (final s in items)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('•  ', style: TextStyle(color: color)),
+                  Expanded(
+                    child: Text(
+                      s,
+                      style: const TextStyle(color: textMain, height: 1.35),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(backgroundColor: bg, title: Text('Result • ${iv.module}')),
-        body: ListView(padding: const EdgeInsets.all(16), children: [
-          panel(
-            child: Column(children: [
+    appBar: AppBar(backgroundColor: bg, title: Text('Result • ${iv.module}')),
+    body: ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        panel(
+          child: Column(
+            children: [
               ScoreRing(score: rep.overall),
               const SizedBox(height: 12),
-              Wrap(spacing: 8, children: [
-                pill('Level: ${rep.levelReached}'),
-                pill('${iv.log.length} answers', color: muted),
-                pill('${iv.elapsed.round()} min', color: muted),
-              ]),
+              Wrap(
+                spacing: 8,
+                children: [
+                  pill('Level: ${rep.levelReached}'),
+                  pill('${iv.log.length} answers', color: muted),
+                  pill('${iv.elapsed.round()} min', color: muted),
+                ],
+              ),
               const SizedBox(height: 12),
-              Text(rep.verdict,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: scoreColor(rep.overall), fontSize: 16, fontWeight: FontWeight.w700)),
-            ]),
+              Text(
+                rep.verdict,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: scoreColor(rep.overall),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
-          _section('STRENGTHS', Icons.thumb_up_alt_outlined, good, rep.strengths, 'Abhi koi strong topic nahi'),
-          _section('AREAS TO IMPROVE', Icons.flag_outlined, warn, rep.gaps, 'Koi bada gap nahi'),
-          _section('STUDY PLAN', Icons.menu_book_outlined, accent, rep.studyPlan, 'Koi specific study plan nahi'),
-          const SizedBox(height: 12),
-          panel(
-            padding: EdgeInsets.zero,
-            child: ExpansionTile(
-              title: const Text('Full transcript', style: TextStyle(color: textMain, fontWeight: FontWeight.w700)),
-              iconColor: accent,
-              collapsedIconColor: muted,
-              childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              children: [
-                for (final x in iv.log)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 10),
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Row(children: [
-                        Expanded(child: Text(x.topic, style: const TextStyle(color: accent, fontWeight: FontWeight.w700))),
-                        if (x.score != null) pill('${x.score}/10', color: scoreColor(x.score!)),
-                      ]),
-                      Text('Q: ${x.q}', style: const TextStyle(color: textMain)),
+        ),
+        _section(
+          'STRENGTHS',
+          Icons.thumb_up_alt_outlined,
+          good,
+          rep.strengths,
+          'Abhi koi strong topic nahi',
+        ),
+        _section(
+          'AREAS TO IMPROVE',
+          Icons.flag_outlined,
+          warn,
+          rep.gaps,
+          'Koi bada gap nahi',
+        ),
+        _section(
+          'STUDY PLAN',
+          Icons.menu_book_outlined,
+          accent,
+          rep.studyPlan,
+          'Koi specific study plan nahi',
+        ),
+        const SizedBox(height: 12),
+        panel(
+          padding: EdgeInsets.zero,
+          child: ExpansionTile(
+            title: const Text(
+              'Full transcript',
+              style: TextStyle(color: textMain, fontWeight: FontWeight.w700),
+            ),
+            iconColor: accent,
+            collapsedIconColor: muted,
+            childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            children: [
+              for (final x in iv.log)
+                Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              x.topic,
+                              style: const TextStyle(
+                                color: accent,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          if (x.score != null)
+                            pill('${x.score}/10', color: scoreColor(x.score!)),
+                        ],
+                      ),
+                      Text(
+                        'Q: ${x.q}',
+                        style: const TextStyle(color: textMain),
+                      ),
                       Text('A: ${x.a}', style: const TextStyle(color: muted)),
                       if ((x.ideal ?? '').isNotEmpty && (x.score ?? 10) <= 5)
-                        Text('Model answer: ${x.ideal}', style: const TextStyle(color: good, fontSize: 13)),
-                    ]),
+                        Text(
+                          'Model answer: ${x.ideal}',
+                          style: const TextStyle(color: good, fontSize: 13),
+                        ),
+                    ],
                   ),
-              ],
-            ),
+                ),
+            ],
           ),
-          const SizedBox(height: 16),
-          primaryBtn('Copy full report', () async {
+        ),
+        const SizedBox(height: 16),
+        primaryBtn(
+          'Copy full report',
+          () async {
             await Clipboard.setData(ClipboardData(text: text));
             if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Report copy ho gaya')));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Report copy ho gaya')),
+              );
             }
-          }, icon: Icons.copy_all, color: card2),
-          const SizedBox(height: 10),
-          primaryBtn('Back to home', () => Navigator.pop(context), icon: Icons.home_outlined),
-        ]),
-      );
+          },
+          icon: Icons.copy_all,
+          color: card2,
+        ),
+        const SizedBox(height: 10),
+        primaryBtn(
+          'Back to home',
+          () => Navigator.pop(context),
+          icon: Icons.home_outlined,
+        ),
+      ],
+    ),
+  );
 }
 
 // =====================================================================
@@ -795,7 +1315,12 @@ class HistoryPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(backgroundColor: bg, title: const Text('Past interviews')),
       body: items.isEmpty
-          ? const Center(child: Text('Abhi koi interview nahi diya', style: TextStyle(color: muted)))
+          ? const Center(
+              child: Text(
+                'Abhi koi interview nahi diya',
+                style: TextStyle(color: muted),
+              ),
+            )
           : ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: items.length,
@@ -810,31 +1335,63 @@ class HistoryPage extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (_) => Scaffold(
-                        appBar: AppBar(backgroundColor: bg, title: Text(r['role'])),
+                        appBar: AppBar(
+                          backgroundColor: bg,
+                          title: Text(r['role']),
+                        ),
                         body: SingleChildScrollView(
                           padding: const EdgeInsets.all(16),
-                          child: SelectableText(r['text'], style: const TextStyle(color: textMain, height: 1.4)),
+                          child: SelectableText(
+                            r['text'],
+                            style: const TextStyle(
+                              color: textMain,
+                              height: 1.4,
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ),
                   child: panel(
-                    child: Row(children: [
-                      CircleAvatar(
-                        radius: 26,
-                        backgroundColor: scoreColor(s).withValues(alpha: 0.15),
-                        child: Text('$s', style: TextStyle(color: scoreColor(s), fontWeight: FontWeight.w900)),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Text(r['role'], style: const TextStyle(color: textMain, fontWeight: FontWeight.w700)),
-                          Text('${at.day}/${at.month}/${at.year}  •  level ${r['level']}',
-                              style: const TextStyle(color: muted, fontSize: 12)),
-                        ]),
-                      ),
-                      const Icon(Icons.chevron_right, color: muted),
-                    ]),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 26,
+                          backgroundColor: scoreColor(s)
+                              .withValues(alpha: 0.15),
+                          child: Text(
+                            '$s',
+                            style: TextStyle(
+                              color: scoreColor(s),
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                r['role'],
+                                style: const TextStyle(
+                                  color: textMain,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              Text(
+                                '${at.day}/${at.month}/${at.year}  •  level ${r['level']}',
+                                style: const TextStyle(
+                                  color: muted,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right, color: muted),
+                      ],
+                    ),
                   ),
                 );
               },
@@ -854,23 +1411,62 @@ class SettingsSheet extends StatefulWidget {
 class _SettingsSheetState extends State<SettingsSheet> {
   @override
   Widget build(BuildContext context) => Container(
-        color: card,
-        padding: const EdgeInsets.all(16),
-        child: SafeArea(
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            SwitchListTile(
-              value: widget.app.voiceOn,
-              onChanged: (v) => setState(() => widget.app.voiceOn = v),
-              title: const Text('Interviewer voice'),
-              subtitle: const Text('Sawaal awaaz mein bole'),
+    color: card,
+    padding: const EdgeInsets.all(16),
+    child: SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SwitchListTile(
+            value: widget.app.voiceOn,
+            onChanged: (v) => setState(() => widget.app.voiceOn = v),
+            title: const Text('Interviewer voice'),
+            subtitle: const Text('Sawaal awaaz mein bole'),
+          ),
+          SwitchListTile(
+            value: widget.app.autoListen,
+            onChanged: (v) => setState(() => widget.app.autoListen = v),
+            title: const Text('Auto mic'),
+            subtitle: const Text('Sawaal ke baad mic apne aap chalu'),
+          ),
+          ListTile(
+            title: const Text('Mic kitni der chalu rahe'),
+            subtitle: Wrap(
+              spacing: 6,
+              children: [
+                for (final sec in const [60, 90, 120, 180])
+                  ChoiceChip(
+                    label: Text(sec == 90 ? '1.5 min' : '${sec ~/ 60} min'),
+                    selected: widget.app.micSeconds == sec,
+                    onSelected: (_) =>
+                        setState(() => widget.app.micSeconds = sec),
+                  ),
+              ],
             ),
-            SwitchListTile(
-              value: widget.app.autoListen,
-              onChanged: (v) => setState(() => widget.app.autoListen = v),
-              title: const Text('Auto mic'),
-              subtitle: const Text('Sawaal ke baad mic apne aap chalu'),
+          ),
+          ListTile(
+            title: const Text('Sunne ki bhasha'),
+            subtitle: Wrap(
+              spacing: 6,
+              children: [
+                for (final (code, l) in const [
+                  ('en_IN', 'English (India)'),
+                  ('en_US', 'English (US)'),
+                  ('en_GB', 'English (UK)'),
+                  ('hi_IN', 'Hindi'),
+                ])
+                  ChoiceChip(
+                    label: Text(l),
+                    selected: widget.app.sttLocale == code,
+                    onSelected: (_) =>
+                        setState(() => widget.app.sttLocale = code),
+                  ),
+              ],
             ),
-          ]),
-        ),
-      );
+          ),
+        ],
+      ),
+    ),
+  );
 }
